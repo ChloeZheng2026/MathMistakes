@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>数学错题本</title>
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['$','$'],['\\(','\\)']], displayMath: [['$$','$$'],['\\[','\\]']] },
+  svg: { fontCache: 'none' },
+  startup: { typeset: true }
+};
+</script>
+<script src="mathjax/tex-svg-full.js" async></script>
+<style>
+
+/* Layout: graph-paper notebook; one sheet per view, red-pen marks for errors, blue ink for method */
+:root{
+  --paper:#F5F7FB; --grid:rgba(47,91,211,.07); --card:#FFFFFF; --ink:#1B2440; --muted:#5D6680; --line:#DCE2EC;
+  --red:#C8372D; --red-soft:#FBEAE7; --blue:#2F5BD3; --blue-soft:#E8EEFC; --green:#1F8A5B; --green-soft:#E3F4EC; --amber:#A86B12; --amber-soft:#FBF1DE;
+  --f-display:"Noto Serif SC","Songti SC","STSong",serif;
+  --f-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#11151E; --grid:rgba(126,162,255,.06); --card:#191F2C; --ink:#E6EAF2; --muted:#98A1B6; --line:#2A3245;
+  --red:#F07462; --red-soft:#3A201E; --blue:#86A6FF; --blue-soft:#1E2847; --green:#4CC38A; --green-soft:#16302A; --amber:#E2A84B; --amber-soft:#33281A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#11151E; --grid:rgba(126,162,255,.06); --card:#191F2C; --ink:#E6EAF2; --muted:#98A1B6; --line:#2A3245;
+  --red:#F07462; --red-soft:#3A201E; --blue:#86A6FF; --blue-soft:#1E2847; --green:#4CC38A; --green-soft:#16302A; --amber:#E2A84B; --amber-soft:#33281A; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.7;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:22px 22px;}
+.wrap{max-width:1040px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 60px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;margin-bottom:18px}
+h1{font-family:var(--f-display);font-weight:900;font-size:clamp(26px,5vw,34px);margin:0;letter-spacing:.02em;line-height:1.2}
+h1 .mark{color:var(--red);position:relative}
+.sub{color:var(--muted);font-size:13px;margin:2px 0 0}
+.tabs{display:flex;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px}
+.tab{border:0;background:none;color:var(--muted);font:inherit;font-weight:500;padding:6px 16px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--card)}
+.tab .n{font-family:var(--f-mono);font-size:12px;margin-left:4px;opacity:.8}
+.tab:focus-visible,button:focus-visible,select:focus-visible,textarea:focus-visible,label.drop:focus-within{outline:2px solid var(--blue);outline-offset:2px}
+
+.grid2{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:820px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.panel h2{font-family:var(--f-display);font-size:17px;margin:0 0 12px}
+.lbl{display:block;font-size:12px;letter-spacing:.06em;color:var(--muted);margin:14px 0 6px}
+select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+textarea{min-height:64px;resize:vertical}
+label.drop{display:grid;place-items:center;min-height:180px;border:2px dashed var(--line);border-radius:var(--r);background:var(--paper);cursor:pointer;text-align:center;padding:14px;color:var(--muted);transition:border-color .15s}
+label.drop:hover,label.drop.over{border-color:var(--blue);color:var(--blue)}
+label.drop img{max-height:280px;border-radius:6px;object-fit:contain}
+label.drop input{position:absolute;opacity:0;width:1px;height:1px}
+.drop b{display:block;color:var(--ink);font-size:16px;margin-bottom:2px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font:inherit;font-weight:500;border-radius:8px;padding:8px 16px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--red);border-color:var(--red);color:#fff}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.blue{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn.sm{padding:4px 10px;font-size:13px}
+.btn.ghost{border-color:transparent;background:none;color:var(--muted)}
+.btn.ghost:hover{color:var(--red)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.mt{margin-top:14px}
+.hint{font-size:12px;color:var(--muted);margin:8px 0 0}
+.status{font-size:13px;margin-top:10px;color:var(--muted);min-height:1.4em}
+.status.err{color:var(--red)}
+
+/* analysis sheet */
+.sheet{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.sheet-head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between}
+.sheet-head h3{font-family:var(--f-display);font-size:20px;margin:0;text-wrap:balance}
+.meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;color:var(--muted)}
+.chip{display:inline-flex;align-items:center;border-radius:999px;padding:1px 10px;font-size:12px;font-weight:500;background:var(--blue-soft);color:var(--blue);white-space:nowrap}
+.chip.err{background:var(--red-soft);color:var(--red)}
+.chip.ok{background:var(--green-soft);color:var(--green)}
+.chip.todo{background:var(--amber-soft);color:var(--amber)}
+.sec{padding:16px 20px;border-bottom:1px dashed var(--line);display:grid;grid-template-columns:84px minmax(0,1fr);gap:4px 16px}
+.sec:last-child{border-bottom:0}
+@media (max-width:560px){.sec{grid-template-columns:minmax(0,1fr)}}
+.sec>h4{margin:0;font-size:13px;letter-spacing:.08em;color:var(--muted);font-weight:700;padding-top:2px}
+.sec.diag>h4{color:var(--red)}
+.sec.mother>h4{color:var(--blue)}
+.sec.sum>h4{color:var(--green)}
+.body{min-width:0;overflow-x:auto}
+.body p{margin:0 0 6px}
+.qimg{max-width:100%;max-height:260px;border-radius:6px;border:1px solid var(--line);margin-top:8px;display:block}
+.wrong{color:var(--red);text-decoration:line-through;text-decoration-thickness:1.5px}
+.stamp{display:inline-block;border:2px solid var(--red);color:var(--red);font-family:var(--f-display);font-weight:900;padding:0 10px;border-radius:6px;transform:rotate(-3deg);margin-bottom:6px;letter-spacing:.1em}
+.mbox{background:var(--blue-soft);border-radius:8px;padding:10px 14px}
+.mbox .name{font-family:var(--f-display);font-weight:600;color:var(--blue);font-size:16px}
+.mbox dl{margin:6px 0 0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px}
+.mbox dt{font-size:12px;color:var(--muted);padding-top:3px;white-space:nowrap}
+.mbox dd{margin:0;min-width:0}
+ol.steps{margin:0;padding:0;list-style:none;counter-reset:s;display:grid;gap:8px}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px}
+ol.steps li::before{content:counter(s);font-family:var(--f-mono);font-size:12px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:var(--card);margin-top:3px}
+ol.steps b{display:block;font-weight:700}
+.ans{display:inline-block;border-bottom:2px solid var(--green);font-weight:700;padding:0 2px}
+ul.pit{margin:0;padding-left:1.2em}
+.summary{font-family:var(--f-display);font-weight:600;font-size:16px}
+.prac{display:grid;gap:10px}
+.pq{border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.pq .t{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.06em}
+.pq details{margin-top:6px}
+.pq summary{cursor:pointer;color:var(--blue);font-size:13px}
+.pq .sol{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line)}
+.sheet-foot{padding:14px 20px;background:var(--paper);display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.banner{font-size:13px;background:var(--amber-soft);color:var(--amber);padding:8px 20px;border-bottom:1px solid var(--line)}
+.loading{padding:40px 20px;text-align:center;color:var(--muted)}
+.pen{width:40px;height:40px;margin:0 auto 10px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--red);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.pen{animation:none}}
+
+/* notebook list */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px}
+.stat .k{font-size:12px;color:var(--muted)}
+.stat .v{font-family:var(--f-mono);font-size:22px;font-variant-numeric:tabular-nums}
+.stat .v small{font-family:var(--f-body);font-size:13px;color:var(--muted)}
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;align-items:center}
+.filters .k{font-size:12px;color:var(--muted);margin-right:2px}
+.fchip{border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:13px;border-radius:999px;padding:2px 12px;cursor:pointer}
+.fchip[aria-pressed="true"]{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.list{display:grid;gap:10px}
+.item{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.item.mastered{opacity:.75}
+.ihead{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 14px;cursor:pointer;width:100%;background:none;border:0;font:inherit;color:inherit;text-align:left}
+.ihead img{width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
+.ihead .ph{width:56px;height:56px;border-radius:6px;background:var(--paper);display:grid;place-items:center;font-family:var(--f-display);color:var(--muted);font-size:20px;border:1px solid var(--line)}
+.ihead .tt{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ihead .date{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.item .sheet{border:0;border-top:1px solid var(--line);border-radius:0}
+.empty{text-align:center;padding:48px 20px;color:var(--muted);background:var(--card);border:1px dashed var(--line);border-radius:var(--r)}
+.empty b{display:block;color:var(--ink);font-family:var(--f-display);font-size:18px;margin-bottom:4px}
+.confirm{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--red)}
+
+/* print view */
+.plist{display:grid;gap:4px;max-height:420px;overflow:auto;margin-top:6px}
+.plist label{display:flex;gap:8px;align-items:flex-start;font-size:14px;padding:4px 2px;cursor:pointer}
+.plist label span{min-width:0}
+.opts label{display:flex;gap:8px;align-items:center;font-size:14px;margin:4px 0;cursor:pointer}
+.paper-wrap{overflow-x:auto;background:var(--line);border-radius:var(--r);padding:16px}
+.paper{background:#fff;color:#111;width:100%;max-width:794px;margin:0 auto;padding:44px 48px;box-shadow:0 4px 18px rgba(0,0,0,.12);min-height:400px}
+@media (max-width:560px){.paper{padding:22px 18px}}
+
+body{margin:0;-webkit-text-size-adjust:100%}
+img{max-width:100%}
+[hidden]{display:none!important}
+.setbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;background:var(--amber-soft);color:var(--amber);border-radius:8px;padding:8px 12px;font-size:13px;margin-bottom:12px}
+.iconbtn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;font:inherit;font-size:13px;padding:6px 14px;cursor:pointer}
+.hdr-r{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);padding:0;width:min(520px,calc(100vw - 32px));max-height:calc(100vh - 32px)}
+dialog::backdrop{background:rgba(10,14,25,.45)}
+.dlg{padding:20px}
+.dlg h2{font-family:var(--f-display);margin:0 0 4px;font-size:19px}
+.dlg input[type=text],.dlg input[type=password]{width:100%;font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.dlg hr{border:0;border-top:1px solid var(--line);margin:18px 0 6px}
+.dlg code{font-family:var(--f-mono);font-size:12px;background:var(--paper);padding:1px 4px;border-radius:4px}
+#printRoot{display:none}
+@media print{
+  body{background:#fff!important;background-image:none!important}
+  .wrap,dialog{display:none!important}
+  #printRoot{display:block}
+  @page{size:A4;margin:15mm 14mm}
+}
+
+.pdoc{font-family:"Noto Serif SC","Songti SC","SimSun",serif;font-size:13.5px;line-height:1.75;color:#111}
+.pdoc h1{font-size:22px;text-align:center;margin:0 0 2px;letter-spacing:.2em}
+.pdoc .pinfo{text-align:center;font-size:12px;color:#555;margin-bottom:16px;border-bottom:2px solid #111;padding-bottom:8px}
+.pdoc .pi{margin-bottom:22px;padding-bottom:12px;border-bottom:1px dashed #999}
+.pdoc .pi h2{font-size:15.5px;margin:0 0 6px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.pdoc .pi h2 .no{background:#111;color:#fff;padding:0 8px;border-radius:3px;font-size:13px}
+.pdoc .pi h2 .tag{font-size:11.5px;font-weight:400;color:#444;border:1px solid #999;border-radius:3px;padding:0 6px}
+.pdoc .pi h2 .tag.e{color:#b3261e;border-color:#b3261e}
+.pdoc .blk{display:grid;grid-template-columns:62px minmax(0,1fr);gap:8px;margin:5px 0;break-inside:avoid}
+.pdoc .blk>b{font-size:12px;color:#444;padding-top:2px}
+.pdoc .blk p{margin:0 0 3px}
+.pdoc img{max-width:60%;max-height:200px;border:1px solid #ccc;display:block;margin-top:4px}
+.pdoc ol{margin:0;padding-left:1.3em}
+.pdoc .lines{height:96px;background-image:repeating-linear-gradient(transparent 0 23px,#ccc 23px 24px);margin:4px 0 8px}
+.pdoc .anssec{break-before:page}
+.pdoc .anssec h2{font-size:17px;text-align:center;letter-spacing:.2em;border-bottom:2px solid #111;padding-bottom:6px}
+.pdoc .wr{text-decoration:line-through;color:#b3261e}
+.pdoc mjx-container{display:inline-block;max-width:100%}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>数学<span class="mark">错题</span>本</h1>
+      <p class="sub">拍下错题 → 诊断错因 → 找到母题 → 两道同类题巩固 → 整理打印</p>
+    </div>
+    <div class="hdr-r">
+      <nav class="tabs" role="tablist" aria-label="视图">
+        <button class="tab" role="tab" aria-selected="true" data-view="analyze">拍照分析</button>
+        <button class="tab" role="tab" aria-selected="false" data-view="book">错题集<span class="n" id="count">0</span></button>
+        <button class="tab" role="tab" aria-selected="false" data-view="print">打印</button>
+      </nav>
+      <button class="iconbtn" id="openSet">设置</button>
+    </div>
+  </header>
+
+  <section id="v-analyze">
+    <div class="grid2">
+      <div class="panel">
+        <div class="setbar" id="needKey" hidden><span>还没有填写豆包 API Key，先完成设置才能分析。</span><button class="btn sm" id="needKeyBtn">去设置</button></div>
+        <h2>上传错题</h2>
+        <label class="drop" id="drop">
+          <input type="file" id="file" accept="image/*">
+          <div id="dropInner"><b>拍照或选择图片</b>支持拖入、粘贴截图<br>一次一道题效果最好</div>
+        </label>
+        <label class="lbl" for="grade">年级</label>
+        <select id="grade">
+          <option>小学三年级</option><option>小学四年级</option><option>小学五年级</option><option>小学六年级</option>
+          <option>初一</option><option selected>初二</option><option>初三</option>
+          <option>高一</option><option>高二</option><option>高三</option>
+        </select>
+        <label class="lbl" for="note">补充说明（可选）</label>
+        <textarea id="note" placeholder="例如：我算出来是 9；或者只看第 3 小题"></textarea>
+        <label class="lbl" for="qtext">没有照片？直接输入题目</label>
+        <textarea id="qtext" placeholder="在这里粘贴或输入题目文字"></textarea>
+        <div class="row mt">
+          <button class="btn primary" id="go">开始分析</button>
+          <button class="btn" id="stop" hidden>取消</button>
+          <button class="btn ghost" id="clear">清空</button>
+        </div>
+        <div class="status" id="status" role="status"></div>
+      </div>
+      <div id="result"></div>
+    </div>
+  </section>
+
+  <section id="v-book" hidden>
+    <div class="stats" id="stats"></div>
+    <div id="filters"></div>
+    <div class="list" id="list"></div>
+  </section>
+
+  <section id="v-print" hidden>
+    <div class="grid2">
+      <div class="panel">
+        <h2>选择要打印的错题</h2>
+        <div class="row">
+          <button class="btn sm" id="selTodo">只选未掌握</button>
+          <button class="btn sm" id="selAll">全选</button>
+          <button class="btn sm" id="selNone">清空</button>
+        </div>
+        <div class="plist" id="plist"></div>
+        <span class="lbl">版式</span>
+        <div class="opts">
+          <label><input type="checkbox" id="optPhoto" checked> 附上原题照片</label>
+          <label><input type="checkbox" id="optSol" checked> 包含错因、母题和解题过程</label>
+          <label><input type="checkbox" id="optSpace" checked> 巩固题下留作答横线</label>
+          <label><input type="checkbox" id="optAns" checked> 参考答案单独放在最后一页</label>
+        </div>
+        <div class="row mt">
+          <button class="btn blue" id="doPrint">打印 / 存为 PDF</button>
+        </div>
+        <p class="hint">打印窗口里纸张选 A4；想要 PDF 就把打印机选成“另存为 PDF”。</p>
+      </div>
+      <div class="paper-wrap"><div class="paper"><div class="pdoc" id="preview"></div></div></div>
+    </div>
+  </section>
+</div>
+
+<div id="printRoot" class="pdoc"></div>
+
+<dialog id="setDlg">
+  <form class="dlg" method="dialog" id="setForm">
+    <h2>设置</h2>
+    <p class="hint" style="margin-top:0">使用火山方舟（豆包）接口。Key 只保存在这台设备的浏览器里，不会上传到别处。</p>
+    <label class="lbl" for="sUrl">接口地址</label>
+    <input type="text" id="sUrl" autocomplete="off" spellcheck="false">
+    <label class="lbl" for="sKey">API Key</label>
+    <input type="password" id="sKey" autocomplete="off" spellcheck="false" placeholder="在火山方舟控制台 → API Key 管理 中创建">
+    <label class="lbl" for="sModel">模型（Model ID 或推理接入点 ep-…）</label>
+    <input type="text" id="sModel" autocomplete="off" spellcheck="false">
+    <p class="hint">需要选支持图片理解的模型（名称里一般带 vision 或 seed）。在方舟控制台“开通管理”里先开通该模型。</p>
+    <div class="row mt">
+      <button class="btn primary" value="save" id="sSave">保存</button>
+      <button class="btn" type="button" id="sTest">测试连接</button>
+      <button class="btn ghost" value="cancel" formnovalidate>关闭</button>
+    </div>
+    <div class="status" id="sStatus" role="status"></div>
+    <hr>
+    <span class="lbl">数据备份</span>
+    <p class="hint" style="margin-top:0">错题保存在当前浏览器里。换设备或清理浏览器前，先导出备份。</p>
+    <div class="row">
+      <button class="btn sm" type="button" id="exp">导出备份</button>
+      <label class="btn sm" style="position:relative">导入备份<input type="file" id="imp" accept="application/json,.json" style="position:absolute;opacity:0;width:1px;height:1px"></label>
+    </div>
+    <div class="status" id="bStatus" role="status"></div>
+  </form>
+</dialog>
+
+<script src="app.js"></script>
+</body>
+</html>
