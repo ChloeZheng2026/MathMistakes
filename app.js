@@ -4,7 +4,8 @@ const ERR_TYPES = ['概念不清','审题偏差','计算失误','方法不当','
 const DEFAULTS = {
   url: 'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
   model: 'doubao-seed-1-6-vision-250815',
-  key: ''
+  key: '',
+  think: 'disabled'
 };
 
 const SAMPLE = {
@@ -54,11 +55,11 @@ function saveSettings(s){ lsSet('cuoti-settings', JSON.stringify(s)); refreshKey
 function refreshKeyBar(){ $('#needKey').hidden = !!getSettings().key; }
 const dlg = $('#setDlg');
 function openSettings(){
-  const s = getSettings(); $('#sUrl').value = s.url; $('#sKey').value = s.key; $('#sModel').value = s.model;
+  const s = getSettings(); $('#sUrl').value = s.url; $('#sKey').value = s.key; $('#sModel').value = s.model; $('#sThink').value = s.think;
   $('#sStatus').textContent = ''; $('#bStatus').textContent = '';
   dlg.showModal ? dlg.showModal() : dlg.setAttribute('open','');
 }
-const formSettings = () => ({ url: $('#sUrl').value.trim() || DEFAULTS.url, key: $('#sKey').value.trim(), model: $('#sModel').value.trim() || DEFAULTS.model });
+const formSettings = () => ({ url: $('#sUrl').value.trim() || DEFAULTS.url, key: $('#sKey').value.trim(), model: $('#sModel').value.trim() || DEFAULTS.model, think: $('#sThink').value });
 $('#openSet').addEventListener('click', openSettings);
 $('#needKeyBtn').addEventListener('click', openSettings);
 $('#setForm').addEventListener('submit', e => { if (e.submitter && e.submitter.value === 'save') saveSettings(formSettings()); });
@@ -124,36 +125,49 @@ function setView(v){
 document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
 
 /* ---------- analysis card ---------- */
+const tabSel = {};
+const TABS = [['diag','错因'],['mother','母题'],['sol','解法'],['prac','巩固']];
 function sheetHTML(a, o = {}){
+  const key = o.key || 'cur', cur = tabSel[key] || 'diag';
   const kp = (a.knowledgePoints || []).map(k => `<span class="chip">${esc(k)}</span>`).join('');
   const steps = (a.solution || []).map(s => `<li><div><b>${tx(s.step)}</b>${tx(s.detail)}</div></li>`).join('');
   const pits = (a.pitfalls || []).map(p => `<li>${tx(p)}</li>`).join('');
-  const prac = (a.practice || []).map((p,i) => `
-    <div class="pq"><div class="t">巩固 ${i+1}</div><div>${tx(p.question)}</div>
-      <details><summary>看答案与解析</summary><div class="sol"><p>答案：<span class="ans">${tx(p.answer)}</span></p><p>${tx(p.solution)}</p></div></details></div>`).join('');
+  let prac;
+  if (a.practice == null) prac = `<div class="pwait"><span class="pen sm"></span>正在出 2 道同类题，可以先看错因和解法…</div>`;
+  else if (!a.practice.length) prac = `<p class="status err">${esc(a.practiceErr || '还没有巩固题')}</p>${key === 'cur' ? '<button class="btn sm" data-act="retryprac">重新出题</button>' : ''}`;
+  else prac = `<div class="prac">${a.practice.map((p,i) => `
+    <div class="pq"><div class="t">巩固 ${i+1}${i ? ' · 提高' : ' · 同难度'}</div><div>${tx(p.question)}</div>
+      <details><summary>看答案与解析</summary><div class="sol"><p>答案：<span class="ans">${tx(p.answer)}</span></p><p>${tx(p.solution)}</p></div></details></div>`).join('')}</div>`;
   const m = a.motherProblem || {};
   const status = o.item ? (o.item.mastered ? '<span class="chip ok">已掌握</span>' : '<span class="chip todo">未掌握</span>') : '';
-  return `<article class="sheet">
+  const panels = {
+    diag: `<span class="stamp">${esc(a.errorType || '待定')}</span>
+      ${a.studentAnswer ? `<p>原作答：<span class="wrong">${tx(a.studentAnswer)}</span></p>` : ''}
+      <p>${tx(a.errorAnalysis)}</p>
+      ${pits ? `<p class="plabel">易错点</p><ul class="pit">${pits}</ul>` : ''}`,
+    mother: `<div class="mbox"><div class="name">${esc(m.name || '')}</div>
+      <dl><dt>母题</dt><dd>${tx(m.statement)}</dd><dt>通法</dt><dd>${tx(m.method)}</dd><dt>突破口</dt><dd>${tx(m.keyIdea)}</dd></dl></div>`,
+    sol: `<ol class="steps">${steps}</ol><p class="mt">答案：<span class="ans">${tx(a.answer)}</span></p>`,
+    prac
+  };
+  return `<article class="sheet" data-key="${esc(key)}">
     ${o.banner ? `<div class="banner">${o.banner}</div>` : ''}
     <div class="sheet-head"><h3>${esc(a.title || '错题分析')}</h3>
       <div class="meta">${status}<span>${esc(a.grade || '')}</span><span>·</span><span>${esc(a.topic || '')}</span>${kp}</div></div>
-    <section class="sec"><h4>原题</h4><div class="body"><p>${tx(a.question)}</p>
-      ${o.image ? `<img class="qimg" src="${o.image}" alt="错题原图">` : ''}</div></section>
-    <section class="sec diag"><h4>错因诊断</h4><div class="body">
-      <span class="stamp">${esc(a.errorType || '待定')}</span>
-      ${a.studentAnswer ? `<p>原作答：<span class="wrong">${tx(a.studentAnswer)}</span></p>` : ''}
-      <p>${tx(a.errorAnalysis)}</p></div></section>
-    <section class="sec mother"><h4>母题</h4><div class="body"><div class="mbox">
-      <div class="name">${esc(m.name || '')}</div>
-      <dl><dt>母题</dt><dd>${tx(m.statement)}</dd><dt>通法</dt><dd>${tx(m.method)}</dd><dt>突破口</dt><dd>${tx(m.keyIdea)}</dd></dl></div></div></section>
-    <section class="sec"><h4>正确解法</h4><div class="body"><ol class="steps">${steps}</ol>
-      <p class="mt">答案：<span class="ans">${tx(a.answer)}</span></p></div></section>
-    ${pits ? `<section class="sec"><h4>易错点</h4><div class="body"><ul class="pit">${pits}</ul></div></section>` : ''}
-    <section class="sec sum"><h4>归纳</h4><div class="body"><p class="summary">${tx(a.summary)}</p></div></section>
-    <section class="sec"><h4>同类巩固</h4><div class="body"><div class="prac">${prac}</div></div></section>
+    <div class="qline"><span class="qlabel">原题</span><div class="body"><p>${tx(a.question)}</p>
+      ${o.image ? `<details class="pic"><summary>看原图</summary><img class="qimg" src="${o.image}" alt="错题原图"></details>` : ''}</div></div>
+    <div class="sumline"><span class="qlabel">归纳</span><div class="body">${tx(a.summary)}</div></div>
+    <div class="stabs" role="tablist">${TABS.map(([k,l]) => `<button role="tab" data-tab="${k}" aria-selected="${k === cur}">${l}${k === 'prac' && a.practice == null ? '<span class="dot"></span>' : ''}</button>`).join('')}</div>
+    ${TABS.map(([k]) => `<div class="tpanel body" data-panel="${k}" ${k === cur ? '' : 'hidden'}>${panels[k]}</div>`).join('')}
     ${o.foot ? `<div class="sheet-foot">${o.foot}</div>` : ''}
   </article>`;
 }
+document.addEventListener('click', e => {
+  const t = e.target.closest('.stabs [data-tab]'); if (!t) return;
+  const sh = t.closest('.sheet'); tabSel[sh.dataset.key] = t.dataset.tab;
+  sh.querySelectorAll('.stabs [data-tab]').forEach(b => b.setAttribute('aria-selected', String(b === t)));
+  sh.querySelectorAll('.tpanel').forEach(p => p.hidden = p.dataset.panel !== t.dataset.tab);
+});
 
 function renderResult(){
   const el = $('#result');
@@ -162,7 +176,7 @@ function renderResult(){
     return;
   }
   if (!state.current) {
-    el.innerHTML = sheetHTML(SAMPLE, { banner:'示例：上传你的错题后，这里会显示同样结构的分析结果。' });
+    el.innerHTML = sheetHTML(SAMPLE, { key:'sample', banner:'示例：上传你的错题后，这里会显示同样结构的分析结果。' });
   } else {
     const foot = state.saved
       ? `<span class="chip ok">已加入错题集</span><button class="btn sm" data-act="gobook">去错题集</button>`
@@ -174,10 +188,13 @@ function renderResult(){
 $('#result').addEventListener('click', async e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   if (b.dataset.act === 'gobook') setView('book');
+  if (b.dataset.act === 'retryprac' && state.current) { state.current.practice = null; renderResult(); fillPractice(state.current); }
   if (b.dataset.act === 'save') {
     b.disabled = true; b.textContent = '保存中…';
     try {
-      await store.add({ ...state.current, image: state.currentImg || null, createdAt: Date.now(), mastered: false });
+      const obj = { ...state.current, image: state.currentImg || null, createdAt: Date.now(), mastered: false };
+      delete obj.practiceErr; if (!obj.practice) obj.practice = [];
+      await store.add(obj); state.savedId = obj.id;
       state.saved = true; renderResult();
     } catch (err) { b.disabled = false; b.textContent = '加入错题集'; setStatus('保存失败：' + (err?.message || err), true); }
   }
@@ -223,6 +240,7 @@ async function callLLM(prompt, imageDataUrl, opt = {}){
   const stream = opt.stream !== false;
   const body = { model: s.model, stream, temperature: 0.2,
     messages: [{ role:'system', content:'你是严谨、耐心的中国中小学数学老师。严格按用户要求的格式输出。' }, { role:'user', content }] };
+  if (s.think && s.think !== 'none' && !opt.noThink) body.thinking = { type: s.think };
   let r;
   try {
     r = await fetch(s.url, { method:'POST', signal: opt.signal,
@@ -234,6 +252,7 @@ async function callLLM(prompt, imageDataUrl, opt = {}){
   if (!r.ok) {
     const t = await r.text().catch(() => ''); let m = '';
     try { const j = JSON.parse(t); m = j.error?.message || j.message || ''; } catch {}
+    if (r.status === 400 && body.thinking && /thinking/i.test(m + t)) return callLLM(prompt, imageDataUrl, { ...opt, noThink: true });
     throw { code:'http', status: r.status, message: m || t.slice(0, 200) };
   }
   if (!stream) { const j = await r.json(); return j.choices?.[0]?.message?.content || ''; }
@@ -298,12 +317,11 @@ const FORMAT = `只输出一个 JSON 对象，不要其他文字，不要代码�
  "solution": [{"step":"步骤标题（4-6字）","detail":"这一步的推理与计算"}],
  "answer": "最终答案",
  "pitfalls": ["这类题的易错点，2-3条"],
- "summary": "一句话归纳：遇到什么特征，就用什么方法",
- "practice": [{"question":"同类巩固题","answer":"答案","solution":"简要解析"},{"question":"...","answer":"...","solution":"..."}]
+ "summary": "一句话归纳：遇到什么特征，就用什么方法"
 }
 要求：
 - 用简体中文，面向学生，语气清楚直接。
-- practice 恰好 2 道：与母题同类型、考同一知识点，第1道与原题难度相当，第2道略提高一级；数据与原题不同；每道题都要自己验算，保证答案正确。
+- 解题过程简洁规范，步骤 2-5 步，每步一两句话。
 - 所有数学式都写成 LaTeX 并用 $ 包裹；JSON 字符串里的反斜杠必须写成两个（例如 "\\\\frac{1}{2}"）。
 - 如果图片里有多道题，只分析被批改为错误的那一道（或第一道）。
 - 如果无法识别出数学题，只输出 {"error":"原因"}。`;
@@ -317,10 +335,10 @@ async function analyze(){
   if (state.img) prompt += `附图是学生拍下的一道数学错题，可能包含学生的错误作答和老师批改痕迹。\n`;
   if (qtext) prompt += `题目文字：${qtext}\n`;
   if (note) prompt += `学生补充说明：${note}\n`;
-  prompt += `\n请：识别题目 → 诊断错因 → 归纳出这道题背后的母题与通法 → 给出规范完整的解题过程 → 总结 → 出2道同类巩固题。\n\n` + FORMAT;
-  const imgUrl = state.img ? scale(state.img, 1600).toDataURL('image/jpeg', .85) : null;
+  prompt += `\n请：识别题目 → 诊断错因 → 归纳出这道题背后的母题与通法 → 给出规范完整的解题过程 → 一句话总结。\n\n` + FORMAT;
+  const imgUrl = state.img ? scale(state.img, 1280).toDataURL('image/jpeg', .82) : null;
   ctrl = new AbortController();
-  state.loading = true; state.saved = false; renderResult(); setStatus('');
+  state.loading = true; state.saved = false; state.savedId = null; renderResult(); setStatus('');
   $('#go').disabled = true; $('#stop').hidden = false;
   try {
     const raw = await callLLM(prompt, imgUrl, { signal: ctrl.signal, onText: (t, think) => {
@@ -330,16 +348,33 @@ async function analyze(){
     const a = parseJSON(raw);
     if (!a || a.error) throw { code:'unreadable', message: a?.error || '没有识别到数学题' };
     if (!Array.isArray(a.solution)) a.solution = [];
-    if (!Array.isArray(a.practice)) a.practice = [];
+    a.practice = null;
     if (!Array.isArray(a.knowledgePoints)) a.knowledgePoints = [];
     a.grade = a.grade || grade;
     state.current = a;
     state.currentImg = state.img ? scale(state.img, 1100).toDataURL('image/jpeg', .75) : null;
+    tabSel.cur = 'diag';
+    fillPractice(a);
   } catch (err) {
     setStatus(errText(err), true);
   } finally {
     state.loading = false; ctrl = null; $('#go').disabled = false; $('#stop').hidden = true; renderResult();
+    if (state.current && matchMedia('(max-width:820px)').matches) $('#result').scrollIntoView({ behavior:'smooth', block:'start' });
   }
+}
+/* stage 2: practice questions, generated while the student reads the analysis */
+async function fillPractice(a){
+  a.practiceErr = null;
+  try {
+    const p = await regenPractice(a);
+    if (state.current !== a) return;
+    a.practice = p;
+    if (state.savedId) await store.update(state.savedId, { practice: p });
+  } catch (err) {
+    if (state.current !== a) return;
+    a.practice = []; a.practiceErr = errText(err);
+  }
+  renderResult();
 }
 $('#go').addEventListener('click', analyze);
 $('#stop').addEventListener('click', () => ctrl && ctrl.abort());
@@ -350,7 +385,8 @@ async function regenPractice(item){
 原题：${item.question}
 母题：${item.motherProblem?.name}——${item.motherProblem?.statement}
 通法：${item.motherProblem?.method}
-已有巩固题：${(item.practice||[]).map(p => p.question).join(' | ')}
+${(item.practice||[]).length ? '已有巩固题（不要重复）：' + item.practice.map(p => p.question).join(' | ') : ''}
+易错原因：${item.errorType}——${item.errorAnalysis}
 只输出 JSON 数组，不要其他文字：[{"question":"","answer":"","solution":""},{"question":"","answer":"","solution":""}]。数学式用 $ 包裹的 LaTeX，JSON 中反斜杠写成两个。`;
   const arr = parseJSON(await callLLM(prompt, null));
   if (!Array.isArray(arr) || arr.length < 1) throw new Error('没有生成新题');
@@ -399,7 +435,7 @@ function renderBook(){
           <span class="meta"><span class="date">${fmtDate(i.createdAt)}</span><span>${esc(i.topic || '')}</span><span class="chip err">${esc(i.errorType || '')}</span></span></span>
         <span class="chip ${i.mastered ? 'ok' : 'todo'}">${i.mastered ? '已掌握' : '未掌握'}</span>
       </button>
-      ${open ? sheetHTML(i, { image: i.image, item: i, foot }) : ''}
+      ${open ? sheetHTML(i, { key: i.id, image: i.image, item: i, foot }) : ''}
     </div>`;
   }).join('');
   typeset(list);
