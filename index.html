@@ -11,7 +11,7 @@ window.MathJax = {
   startup: { typeset: true }
 };
 </script>
-   <script src="tex-svg-full.js" async></script>
+<script src="tex-svg-full.js" async></script>
 <style>
 
 /* Layout: graph-paper notebook; one sheet per view, red-pen marks for errors, blue ink for method */
@@ -162,6 +162,25 @@ dialog::backdrop{background:rgba(10,14,25,.45)}
 .dlg input[type=text],.dlg input[type=password]{width:100%;font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
 .dlg hr{border:0;border-top:1px solid var(--line);margin:18px 0 6px}
 .dlg code{font-family:var(--f-mono);font-size:12px;background:var(--paper);padding:1px 4px;border-radius:4px}
+
+.qline,.sumline{display:grid;grid-template-columns:52px minmax(0,1fr);gap:4px 12px;padding:12px 20px;border-bottom:1px dashed var(--line)}
+.qlabel{font-size:12px;letter-spacing:.08em;color:var(--muted);font-weight:700;padding-top:3px}
+.sumline{background:var(--green-soft)}
+.sumline .qlabel{color:var(--green)}
+.sumline .body{font-family:var(--f-display);font-weight:600}
+.qline p{margin:0}
+details.pic summary{cursor:pointer;color:var(--blue);font-size:13px;margin-top:4px}
+.stabs{display:flex;gap:2px;padding:0 12px;border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);background:var(--card);z-index:2;overflow-x:auto}
+.stabs button{flex:1;min-width:64px;border:0;background:none;font:inherit;font-weight:500;color:var(--muted);padding:10px 8px;cursor:pointer;border-bottom:3px solid transparent;position:relative;white-space:nowrap}
+.stabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--red)}
+.stabs .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--amber);margin-left:4px;vertical-align:middle;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.2}}
+.tpanel{padding:16px 20px}
+.plabel{font-size:12px;letter-spacing:.06em;color:var(--muted);font-weight:700;margin:12px 0 4px!important}
+.pwait{display:flex;align-items:center;gap:10px;color:var(--muted);padding:8px 0}
+.pen.sm{width:18px;height:18px;border-width:2px;margin:0;flex:none}
+@media (max-width:560px){.qline,.sumline{grid-template-columns:minmax(0,1fr)}.tpanel{padding:14px 16px}}
+@media (prefers-reduced-motion:reduce){.stabs .dot{animation:none}}
 #printRoot{display:none}
 @media print{
   body{background:#fff!important;background-image:none!important}
@@ -283,6 +302,12 @@ dialog::backdrop{background:rgba(10,14,25,.45)}
     <input type="password" id="sKey" autocomplete="off" spellcheck="false" placeholder="在火山方舟控制台 → API Key 管理 中创建">
     <label class="lbl" for="sModel">模型（Model ID 或推理接入点 ep-…）</label>
     <input type="text" id="sModel" autocomplete="off" spellcheck="false">
+    <label class="lbl" for="sThink">分析模式</label>
+    <select id="sThink">
+      <option value="disabled">快速（关闭深度思考，约 20–40 秒）</option>
+      <option value="auto">自动（模型自己判断要不要深度思考）</option>
+      <option value="enabled">深度思考（更准，较慢，可能要几分钟）</option>
+    </select>
     <p class="hint">需要选支持图片理解的模型（名称里一般带 vision 或 seed）。在方舟控制台“开通管理”里先开通该模型。</p>
     <div class="row mt">
       <button class="btn primary" value="save" id="sSave">保存</button>
